@@ -62,6 +62,19 @@ func (s *systemService) GetEfficiency() float64 {
 	return s.solarPanelSrv.GetEfficiency()
 }
 
+// Transfer heat from SolarPanel to StorageTank
+func (s *systemService) TransferHeat(heatTransferCoefficient float64) {
+
+	// Calculate the amount of heat to transfer based on the temperature difference
+	// between the solar panel and the storage tank, the area of the solar panel,
+	// and the heat transfer coefficient
+	heatTranfer := heatTransferCoefficient * s.solarPanelSrv.GetArea() * (s.solarPanelSrv.GetTemperature() - s.storageTankSrv.GetTemperature())
+
+	// Update the temperature of the storage tank by adding the transferred heat
+	// divided by the volume of the storage tank and a specific heat capacity constant (4.18)
+	s.storageTankSrv.UpdateTemperature(s.storageTankSrv.GetTemperature() + heatTranfer/(s.storageTankSrv.GetVolume()*4.18))
+}
+
 // DisplayTemperatures prints the temperatures and other relevant data to the console
 func (s *systemService) DisplayTemperatures() {
 	fmt.Printf("Solar Panel Temperature: %.2f°C\n", s.solarPanelSrv.GetTemperature())
@@ -79,7 +92,7 @@ func (s *systemService) Simulate(solarRadiation float64, heatTransferCoefficient
 		// s.CaptureAmbientTemperature()
 		s.CaptureDustAccumulation()
 		s.CaptureSolarEnergy(solarRadiation, heatTransferCoefficient)
-		// s.TransferHeat()
+		s.TransferHeat(heatTransferCoefficient)
 		s.UpdateDegradation()
 		s.DisplayTemperatures()
 
