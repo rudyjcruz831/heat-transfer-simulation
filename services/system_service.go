@@ -13,17 +13,20 @@ type systemService struct {
 	system         *models.System
 	solarPanelSrv  models.SolarPanelService
 	storageTankSrv models.StorageTankService
+	pumpSrv        models.PumpService
 }
 
 // Create a NewSystemService is a factory function for
 // initializing a SystemService with its repository layer dependencies
 func NewSystemService(system *models.System,
 	solarasolarPanelService models.SolarPanelService,
-	storageTankService models.StorageTankService) models.SystemService {
+	storageTankService models.StorageTankService,
+	pumpService models.PumpService) models.SystemService {
 	return &systemService{
 		system:         system,
 		solarPanelSrv:  solarasolarPanelService,
 		storageTankSrv: storageTankService,
+		pumpSrv:        pumpService,
 	}
 }
 
@@ -63,37 +66,35 @@ func (s *systemService) GetEfficiency() float64 {
 }
 
 // Transfer heat from SolarPanel to StorageTank
-func (s *systemService) TransferHeat(heatTransferCoefficient float64) {
+func (s *systemService) TransferHeat(heatTransferCoefficient float64, solarPanel models.SolarPanel) {
+	s.storageTankSrv.TransferHeat(heatTransferCoefficient, solarPanel)
+}
 
-	// Calculate the amount of heat to transfer based on the temperature difference
-	// between the solar panel and the storage tank, the area of the solar panel,
-	// and the heat transfer coefficient
-	heatTranfer := heatTransferCoefficient * s.solarPanelSrv.GetArea() * (s.solarPanelSrv.GetTemperature() - s.storageTankSrv.GetTemperature())
-
-	// Update the temperature of the storage tank by adding the transferred heat
-	// divided by the volume of the storage tank and a specific heat capacity constant (4.18)
-	s.storageTankSrv.UpdateTemperature(s.storageTankSrv.GetTemperature() + heatTranfer/(s.storageTankSrv.GetVolume()*4.18))
+func (s *systemService) MonitorWaterFlow() {
+	s.pumpSrv.MonitorWaterFlow()
 }
 
 // DisplayTemperatures prints the temperatures and other relevant data to the console
 func (s *systemService) DisplayTemperatures() {
 	fmt.Printf("Solar Panel Temperature: %.2f°C\n", s.solarPanelSrv.GetTemperature())
 	fmt.Printf("Storage Tank Temperature: %.2f°C\n", s.storageTankSrv.GetTemperature())
-	// fmt.Printf("Ambient Temperature: %.2f°C\n", s.AmbientTemperature)
 	fmt.Printf("Solar Radiation: %.2f\n", s.system.SolarRadiation)
 	fmt.Printf("Solar Panel Efficiency: %.2f\n", s.GetEfficiency())
 	fmt.Printf("Solar Panel Degradation: %.3f\n", s.solarPanelSrv.GetDegradation())
 	fmt.Println("----------------------------------------")
 }
 
-func (s *systemService) Simulate(solarRadiation float64, heatTransferCoefficient float64) {
+func (s *systemService) Simulate(solarRadiation float64,
+	heatTransferCoefficient float64,
+	solarPanel models.SolarPanel) {
 	for {
 		s.CaptureSolarRadiation()
 		// s.CaptureAmbientTemperature()
 		s.CaptureDustAccumulation()
 		s.CaptureSolarEnergy(solarRadiation, heatTransferCoefficient)
-		s.TransferHeat(heatTransferCoefficient)
+		s.TransferHeat(heatTransferCoefficient, solarPanel)
 		s.UpdateDegradation()
+		s.MonitorWaterFlow()
 		s.DisplayTemperatures()
 
 		time.Sleep(time.Second)

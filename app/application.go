@@ -1,7 +1,10 @@
 package app
 
 import (
-	"log"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/rudyjcruz831/heat-transfer-simulation/models"
 	"github.com/rudyjcruz831/heat-transfer-simulation/services"
@@ -12,7 +15,18 @@ const (
 )
 
 func StartApplication() {
-	log.Println("Starting server... ")
+
+	// this is for when some hits CTRL+C to stop continues simulation
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-interrupt
+		fmt.Println("Simulation interrupted. Stopping...")
+		os.Exit(0)
+	}()
+
+	// log.Println("Starting server... ")
 	solarPanle := &models.SolarPanel{
 		Area:           2.0,
 		Efficiency:     0.8,
@@ -26,9 +40,9 @@ func StartApplication() {
 		Temperature: 25.0,
 	}
 
-	// pump := &models.Pump{
-	// 	FlowRate: 10.0,
-	// }
+	pump := &models.Pump{
+		FlowRate: 10.0,
+	}
 
 	system := &models.System{
 		SolarRadiation: 1.0, // Set an initial value for solar radiation
@@ -37,8 +51,10 @@ func StartApplication() {
 
 	solarPaneService := services.NewSolarPanelService(solarPanle)
 	storageTankService := services.NewStorageTankService(storageTank)
-	// pumpService := services.NewPumpService(pump)
-	systemService := services.NewSystemService(system, solarPaneService, storageTankService)
+	pumpService := services.NewPumpService(pump)
+	systemService := services.NewSystemService(system, solarPaneService, storageTankService, pumpService)
 
-	systemService.Simulate(system.SolarRadiation, HeatTransferCoefficient)
+	fmt.Println("Starting Simulation...")
+	// time.Second.Seconds()
+	systemService.Simulate(system.SolarRadiation, HeatTransferCoefficient, *solarPanle)
 }

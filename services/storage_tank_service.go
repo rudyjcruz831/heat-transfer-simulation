@@ -30,3 +30,15 @@ func (t *storageTankService) GetTemperature() float64 {
 func (t *storageTankService) UpdateTemperature(temperature float64) {
 	t.storageTank.Temperature = temperature
 }
+
+// Simulate transfer heat from SolarPanel to Storage Tank
+func (t *storageTankService) TransferHeat(heatTransferCoefficient float64, solarPanel models.SolarPanel) {
+	// Calculate the amount of heat to transfer based on the temperature difference
+	// between the solar panel and the storage tank, the area of the solar panel,
+	// and the heat transfer coefficient
+	heatTranfer := heatTransferCoefficient * solarPanel.Area * (solarPanel.Temperature - t.GetTemperature())
+
+	// Update the temperature of the storage tank by adding the transferred heat
+	// divided by the volume of the storage tank and a specific heat capacity constant (4.18)
+	t.UpdateTemperature(t.GetTemperature() + heatTranfer/(t.GetVolume()*4.18))
+}
