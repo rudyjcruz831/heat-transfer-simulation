@@ -85,7 +85,7 @@ To run the simulation:
 
 1. Ensure you have Go installed on your system.
 2. Create a new Go project or navigate to an existing one.
-3. Copy the provided code into a new file with a `.go` extension (e.g., `main.go`).
+3. Copy the code from github repo: [https://github.com/rudyjcruz831/heat-transfer-simulation.git]
 4. Open a terminal or command prompt and navigate to the project directory.
 5. Run the command `go run main.go` to execute the code.
 6. To stop the continues simulation press (Ctrl+C)
